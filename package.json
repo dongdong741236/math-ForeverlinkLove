@@ -1,0 +1,23 @@
+{
+  "name": "math-foreverlink-love",
+  "version": "1.0.0",
+  "description": "A romantic 3D mathematical visualization of love using parametric heart equations",
+  "main": "worker.js",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "preview": "wrangler preview"
+  },
+  "keywords": [
+    "cloudflare-workers",
+    "three.js",
+    "mathematics",
+    "parametric-equations",
+    "3d-visualization"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  }
+}

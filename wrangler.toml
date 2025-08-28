@@ -1,0 +1,19 @@
+name = "math-foreverlink-love"
+main = "worker.js"
+compatibility_date = "2024-01-01"
+
+[env.production]
+route = { pattern = "math.foreverlink.love/*", zone_name = "foreverlink.love" }
+
+# 如果您还没有自定义域名，可以使用 workers.dev 子域名
+# routes = ["math-foreverlink-love.*.workers.dev/*"]
+
+# 环境变量（如果需要）
+[vars]
+# MY_VARIABLE = "production_value"
+
+# 构建配置
+[build]
+command = ""
+[build.upload]
+format = "service-worker"
