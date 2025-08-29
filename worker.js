@@ -75,31 +75,6 @@ const HTML_CONTENT = `<!DOCTYPE html>
             color: #ff69b4;
         }
         
-        .controls {
-            position: absolute;
-            bottom: 30px;
-            right: 30px;
-            z-index: 10;
-        }
-        
-        .toggle-btn {
-            background: rgba(255, 105, 180, 0.2);
-            border: 2px solid #ff69b4;
-            color: #fff;
-            padding: 12px 24px;
-            border-radius: 25px;
-            cursor: pointer;
-            font-size: 1em;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(10px);
-        }
-        
-        .toggle-btn:hover {
-            background: rgba(255, 105, 180, 0.4);
-            transform: scale(1.05);
-            box-shadow: 0 0 20px rgba(255, 105, 180, 0.6);
-        }
-        
         @media (max-width: 768px) {
             .title h1 {
                 font-size: 1.8em;
@@ -110,12 +85,9 @@ const HTML_CONTENT = `<!DOCTYPE html>
                 padding: 15px;
                 font-size: 0.8em;
             }
-            .controls {
-                bottom: 10px;
-                right: 10px;
-            }
         }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" id="MathJax-script" async></script>
 </head>
 <body>
     <div id="canvas-container"></div>
@@ -128,9 +100,11 @@ const HTML_CONTENT = `<!DOCTYPE html>
     <div class="equations">
         <h3>爱的参数方程：</h3>
         <div>
-            x = sin(u) · (15sin(v) - 4sin(3v))<br>
-            y = 8cos(u)<br>
-            z = sin(u) · (15cos(v) - 5cos(2v) - 2cos(3v) - cos(v))
+            \[\begin{aligned}
+            x &= \sin u\,\bigl(15\sin v - 4\sin 3v\bigr) \\
+            y &= 8\cos u \\
+            z &= \sin u\,\bigl(15\cos v - 5\cos 2v - 2\cos 3v - \cos v\bigr)
+            \end{aligned}\]
         </div>
     </div>
     
@@ -142,16 +116,9 @@ const HTML_CONTENT = `<!DOCTYPE html>
         let isPointCloud = true;
         let time = 0;
         let viewTime = 0;
-        let cameraPositions = [
-            { x: 0, y: 0, z: 40 },
-            { x: 30, y: 20, z: 30 },
-            { x: -35, y: 10, z: 25 },
-            { x: 0, y: 40, z: 20 },
-            { x: 25, y: -15, z: 35 }
-        ];
-        let currentPosIndex = 0;
-        let nextPosIndex = 1;
-        let transitionProgress = 0;
+        let orbitAngle = 0;
+        const orbitRadius = 40;
+        const orbitHeight = 8;
         
         function init() {
             // 创建场景
@@ -165,7 +132,7 @@ const HTML_CONTENT = `<!DOCTYPE html>
                 0.1,
                 1000
             );
-            camera.position.set(25, 15, 25);
+            camera.position.set(0, 8, 40);
             
             // 创建渲染器
             renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -202,8 +169,7 @@ const HTML_CONTENT = `<!DOCTYPE html>
             // 创建心形
             createHeart();
             
-            // 添加粒子背景
-            createParticleBackground();
+            // 简化背景：移除粒子系统
             
             // 窗口大小调整
             window.addEventListener('resize', onWindowResize);
@@ -289,42 +255,12 @@ const HTML_CONTENT = `<!DOCTYPE html>
             scene.add(solidMesh);
         }
         
-        function createParticleBackground() {
-            const particleCount = 1000;
-            const particles = new THREE.BufferGeometry();
-            const positions = [];
-            const colors = [];
-            
-            for (let i = 0; i < particleCount; i++) {
-                const x = (Math.random() - 0.5) * 100;
-                const y = (Math.random() - 0.5) * 100;
-                const z = (Math.random() - 0.5) * 100;
-                positions.push(x, y, z);
-                
-                const color = new THREE.Color();
-                color.setHSL(0.95 + Math.random() * 0.05, 0.7, 0.5);
-                colors.push(color.r, color.g, color.b);
-            }
-            
-            particles.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-            particles.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
-            
-            const particleMaterial = new THREE.PointsMaterial({
-                size: 0.5,
-                vertexColors: true,
-                transparent: true,
-                opacity: 0.6,
-                blending: THREE.AdditiveBlending
-            });
-            
-            const particleSystem = new THREE.Points(particles, particleMaterial);
-            scene.add(particleSystem);
-        }
+        // 简化背景：无粒子函数
         
         function updateViewAndCamera() {
             viewTime += 0.01;
             
-            // 每5秒切换一次视图模式
+            // 每5秒切换一次视图模式（点云/实体）
             if (viewTime % 10 < 5) {
                 if (!isPointCloud) {
                     isPointCloud = true;
@@ -339,28 +275,15 @@ const HTML_CONTENT = `<!DOCTYPE html>
                 }
             }
             
-            // 相机位置平滑过渡
-            transitionProgress += 0.008;
-            if (transitionProgress >= 1) {
-                transitionProgress = 0;
-                currentPosIndex = nextPosIndex;
-                nextPosIndex = (nextPosIndex + 1) % cameraPositions.length;
-            }
-            
-            // 使用缓动函数进行平滑过渡
-            const easedProgress = easeInOutCubic(transitionProgress);
-            const currentPos = cameraPositions[currentPosIndex];
-            const nextPos = cameraPositions[nextPosIndex];
-            const x = currentPos.x + (nextPos.x - currentPos.x) * easedProgress;
-            const y = currentPos.y + (nextPos.y - currentPos.y) * easedProgress;
-            const z = currentPos.z + (nextPos.z - currentPos.z) * easedProgress;
+            // 相机自动绕心形平滑旋转，保持心形可视
+            orbitAngle += 0.003;
+            const x = Math.sin(orbitAngle) * orbitRadius;
+            const z = Math.cos(orbitAngle) * orbitRadius;
+            const y = orbitHeight;
             camera.position.set(x, y, z);
             camera.lookAt(0, 0, 0);
         }
         
-        function easeInOutCubic(t) {
-            return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-        }
         
         function animate() {
             requestAnimationFrame(animate);
