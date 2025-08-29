@@ -134,10 +134,6 @@ const HTML_CONTENT = `<!DOCTYPE html>
         </div>
     </div>
     
-    <div class="controls">
-        <button class="toggle-btn" onclick="toggleView()">切换视图</button>
-    </div>
-
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <script>
@@ -145,6 +141,17 @@ const HTML_CONTENT = `<!DOCTYPE html>
         let pointCloud, solidMesh;
         let isPointCloud = true;
         let time = 0;
+        let viewTime = 0;
+        let cameraPositions = [
+            { x: 0, y: 0, z: 40 },
+            { x: 30, y: 20, z: 30 },
+            { x: -35, y: 10, z: 25 },
+            { x: 0, y: 40, z: 20 },
+            { x: 25, y: -15, z: 35 }
+        ];
+        let currentPosIndex = 0;
+        let nextPosIndex = 1;
+        let transitionProgress = 0;
         
         function init() {
             // 创建场景
@@ -172,7 +179,7 @@ const HTML_CONTENT = `<!DOCTYPE html>
             controls = new THREE.OrbitControls(camera, renderer.domElement);
             controls.enableDamping = true;
             controls.dampingFactor = 0.05;
-            controls.autoRotate = true;
+            controls.autoRotate = false;
             controls.autoRotateSpeed = 0.5;
             
             // 添加光源
@@ -314,22 +321,54 @@ const HTML_CONTENT = `<!DOCTYPE html>
             scene.add(particleSystem);
         }
         
-        function toggleView() {
-            isPointCloud = !isPointCloud;
+        function updateViewAndCamera() {
+            viewTime += 0.01;
             
-            if (isPointCloud) {
-                pointCloud.visible = true;
-                solidMesh.visible = false;
+            // 每5秒切换一次视图模式
+            if (viewTime % 10 < 5) {
+                if (!isPointCloud) {
+                    isPointCloud = true;
+                    if (pointCloud) pointCloud.visible = true;
+                    if (solidMesh) solidMesh.visible = false;
+                }
             } else {
-                pointCloud.visible = false;
-                solidMesh.visible = true;
+                if (isPointCloud) {
+                    isPointCloud = false;
+                    if (pointCloud) pointCloud.visible = false;
+                    if (solidMesh) solidMesh.visible = true;
+                }
             }
+            
+            // 相机位置平滑过渡
+            transitionProgress += 0.008;
+            if (transitionProgress >= 1) {
+                transitionProgress = 0;
+                currentPosIndex = nextPosIndex;
+                nextPosIndex = (nextPosIndex + 1) % cameraPositions.length;
+            }
+            
+            // 使用缓动函数进行平滑过渡
+            const easedProgress = easeInOutCubic(transitionProgress);
+            const currentPos = cameraPositions[currentPosIndex];
+            const nextPos = cameraPositions[nextPosIndex];
+            const x = currentPos.x + (nextPos.x - currentPos.x) * easedProgress;
+            const y = currentPos.y + (nextPos.y - currentPos.y) * easedProgress;
+            const z = currentPos.z + (nextPos.z - currentPos.z) * easedProgress;
+            camera.position.set(x, y, z);
+            camera.lookAt(0, 0, 0);
+        }
+        
+        function easeInOutCubic(t) {
+            return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
         }
         
         function animate() {
             requestAnimationFrame(animate);
             
             time += 0.01;
+            
+            // 更新视图和相机
+            updateViewAndCamera();
             
             // 更新控制器
             controls.update();
