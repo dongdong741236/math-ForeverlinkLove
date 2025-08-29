@@ -75,31 +75,6 @@ const HTML_CONTENT = `<!DOCTYPE html>
             color: #ff69b4;
         }
         
-        .controls {
-            position: absolute;
-            bottom: 30px;
-            right: 30px;
-            z-index: 10;
-        }
-        
-        .toggle-btn {
-            background: rgba(255, 105, 180, 0.2);
-            border: 2px solid #ff69b4;
-            color: #fff;
-            padding: 12px 24px;
-            border-radius: 25px;
-            cursor: pointer;
-            font-size: 1em;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(10px);
-        }
-        
-        .toggle-btn:hover {
-            background: rgba(255, 105, 180, 0.4);
-            transform: scale(1.05);
-            box-shadow: 0 0 20px rgba(255, 105, 180, 0.6);
-        }
-        
         @media (max-width: 768px) {
             .title h1 {
                 font-size: 1.8em;
@@ -110,12 +85,9 @@ const HTML_CONTENT = `<!DOCTYPE html>
                 padding: 15px;
                 font-size: 0.8em;
             }
-            .controls {
-                bottom: 10px;
-                right: 10px;
-            }
         }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" id="MathJax-script" async></script>
 </head>
 <body>
     <div id="canvas-container"></div>
@@ -128,16 +100,14 @@ const HTML_CONTENT = `<!DOCTYPE html>
     <div class="equations">
         <h3>爱的参数方程：</h3>
         <div>
-            x = sin(u) · (15sin(v) - 4sin(3v))<br>
-            y = 8cos(u)<br>
-            z = sin(u) · (15cos(v) - 5cos(2v) - 2cos(3v) - cos(v))
+            \[\begin{aligned}
+            x &= \sin u\,\bigl(15\sin v - 4\sin 3v\bigr) \\
+            y &= 8\cos u \\
+            z &= \sin u\,\bigl(15\cos v - 5\cos 2v - 2\cos 3v - \cos v\bigr)
+            \end{aligned}\]
         </div>
     </div>
     
-    <div class="controls">
-        <button class="toggle-btn" onclick="toggleView()">切换视图</button>
-    </div>
-
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <script>
@@ -145,6 +115,10 @@ const HTML_CONTENT = `<!DOCTYPE html>
         let pointCloud, solidMesh;
         let isPointCloud = true;
         let time = 0;
+        let viewTime = 0;
+        let orbitAngle = 0;
+        const orbitRadius = 40;
+        const orbitHeight = 8;
         
         function init() {
             // 创建场景
@@ -158,7 +132,7 @@ const HTML_CONTENT = `<!DOCTYPE html>
                 0.1,
                 1000
             );
-            camera.position.set(25, 15, 25);
+            camera.position.set(0, 8, 40);
             
             // 创建渲染器
             renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -172,7 +146,7 @@ const HTML_CONTENT = `<!DOCTYPE html>
             controls = new THREE.OrbitControls(camera, renderer.domElement);
             controls.enableDamping = true;
             controls.dampingFactor = 0.05;
-            controls.autoRotate = true;
+            controls.autoRotate = false;
             controls.autoRotateSpeed = 0.5;
             
             // 添加光源
@@ -195,8 +169,7 @@ const HTML_CONTENT = `<!DOCTYPE html>
             // 创建心形
             createHeart();
             
-            // 添加粒子背景
-            createParticleBackground();
+            // 简化背景：移除粒子系统
             
             // 窗口大小调整
             window.addEventListener('resize', onWindowResize);
@@ -282,54 +255,43 @@ const HTML_CONTENT = `<!DOCTYPE html>
             scene.add(solidMesh);
         }
         
-        function createParticleBackground() {
-            const particleCount = 1000;
-            const particles = new THREE.BufferGeometry();
-            const positions = [];
-            const colors = [];
+        // 简化背景：无粒子函数
+        
+        function updateViewAndCamera() {
+            viewTime += 0.01;
             
-            for (let i = 0; i < particleCount; i++) {
-                const x = (Math.random() - 0.5) * 100;
-                const y = (Math.random() - 0.5) * 100;
-                const z = (Math.random() - 0.5) * 100;
-                positions.push(x, y, z);
-                
-                const color = new THREE.Color();
-                color.setHSL(0.95 + Math.random() * 0.05, 0.7, 0.5);
-                colors.push(color.r, color.g, color.b);
+            // 每5秒切换一次视图模式（点云/实体）
+            if (viewTime % 10 < 5) {
+                if (!isPointCloud) {
+                    isPointCloud = true;
+                    if (pointCloud) pointCloud.visible = true;
+                    if (solidMesh) solidMesh.visible = false;
+                }
+            } else {
+                if (isPointCloud) {
+                    isPointCloud = false;
+                    if (pointCloud) pointCloud.visible = false;
+                    if (solidMesh) solidMesh.visible = true;
+                }
             }
             
-            particles.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-            particles.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
-            
-            const particleMaterial = new THREE.PointsMaterial({
-                size: 0.5,
-                vertexColors: true,
-                transparent: true,
-                opacity: 0.6,
-                blending: THREE.AdditiveBlending
-            });
-            
-            const particleSystem = new THREE.Points(particles, particleMaterial);
-            scene.add(particleSystem);
+            // 相机自动绕心形平滑旋转，保持心形可视
+            orbitAngle += 0.003;
+            const x = Math.sin(orbitAngle) * orbitRadius;
+            const z = Math.cos(orbitAngle) * orbitRadius;
+            const y = orbitHeight;
+            camera.position.set(x, y, z);
+            camera.lookAt(0, 0, 0);
         }
         
-        function toggleView() {
-            isPointCloud = !isPointCloud;
-            
-            if (isPointCloud) {
-                pointCloud.visible = true;
-                solidMesh.visible = false;
-            } else {
-                pointCloud.visible = false;
-                solidMesh.visible = true;
-            }
-        }
         
         function animate() {
             requestAnimationFrame(animate);
             
             time += 0.01;
+            
+            // 更新视图和相机
+            updateViewAndCamera();
             
             // 更新控制器
             controls.update();
