@@ -1,79 +1,48 @@
-# Math.ForeverLink.Love - 用数学表达永恒的爱
+# ForeverLink.Love
 
-这是一个浪漫的3D数学可视化项目，使用参数方程绘制心形曲面，展示数学与爱情的完美结合。
+一个展现永恒连接的互动式静态网页，通过动态的线条和粒子效果来体现"link"的概念。
 
 ## 特性
 
-- 🎨 **3D心形曲面** - 使用参数方程生成的美丽心形
-- ✨ **点云到实体切换** - 可在点状云图和实体表面之间切换
-- 💕 **浪漫配色** - 粉色渐变主题，配合粒子背景效果
-- 🎯 **交互式3D视图** - 支持旋转、缩放和自动旋转
-- 💓 **心跳动画** - 模拟真实心跳的缩放动画
+- **动态连接线条**: 实时渲染的流动线条，展现连接的动态美
+- **交互式节点系统**: 移动鼠标创建连接，点击添加新节点
+- **粒子效果**: 跟随鼠标移动的粒子轨迹
+- **响应式设计**: 完美适配各种设备屏幕
+- **优雅的动画**: 渐变背景、脉动文字、流动线条
 
-## 数学方程
+## 技术实现
 
-该项目使用以下参数方程生成心形曲面：
+- 纯 HTML5 Canvas 动画
+- 原生 JavaScript，无需任何框架
+- CSS3 动画和渐变效果
+- 响应式设计
 
-```
-x = sin(u) · (15sin(v) - 4sin(3v))
-y = 8cos(u)
-z = sin(u) · (15cos(v) - 5cos(2v) - 2cos(3v) - cos(v))
-```
+## 本地运行
 
-其中 u ∈ [0, 2π], v ∈ [0, 2π]
+1. 直接在浏览器中打开 `index.html` 文件
+2. 或使用任何静态文件服务器：
+   ```bash
+   # Python
+   python -m http.server 8000
+   
+   # Node.js (需要安装 http-server)
+   npx http-server
+   ```
 
-## 部署到 Cloudflare Workers
+## 交互说明
 
-### 前置要求
+- **移动鼠标**: 创建粒子轨迹并与节点建立连接
+- **点击屏幕**: 在点击位置创建粒子爆发效果和新节点
+- **自动动画**: 节点会自动移动并相互连接
 
-- Node.js 16.x 或更高版本
-- Cloudflare 账户
-- Wrangler CLI
+## 设计理念
 
-### 安装步骤
+ForeverLink.Love 通过视觉化的方式展现了"永恒连接"的概念：
+- 不断流动的线条代表持续的连接
+- 节点之间的引力代表相互吸引
+- 粒子效果象征着情感的流动
+- 整体设计营造出科技与浪漫结合的氛围
 
-1. 克隆或下载项目文件
-
-2. 安装依赖：
-```bash
-npm install
-```
-
-3. 登录 Cloudflare：
-```bash
-npx wrangler login
-```
-
-4. 部署到 Cloudflare Workers：
-```bash
-npm run deploy
-```
-
-### 自定义域名配置
-
-如果您想使用自定义域名 `math.foreverlink.love`：
-
-1. 在 Cloudflare 中添加域名 `foreverlink.love`
-2. 在 DNS 设置中添加 CNAME 记录：
-   - 名称：`math`
-   - 目标：`your-worker-name.workers.dev`
-3. 在 Workers 路由中配置域名绑定
-
-## 本地开发
-
-运行本地开发服务器：
-```bash
-npm run dev
-```
-
-然后访问 `http://localhost:8787` 查看效果。
-
-## 技术栈
-
-- **Three.js** - 3D图形渲染
-- **Cloudflare Workers** - 边缘计算部署
-- **原生 JavaScript** - 核心逻辑实现
-
-## 许可证
+## License
 
 MIT License

@@ -3,324 +3,461 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Math.ForeverLink.Love - 用数学表达永恒的爱</title>
+    <title>ForeverLink.Love - 永恒的连接</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
-            font-family: 'Georgia', serif;
-            background: linear-gradient(135deg, #1a0033 0%, #330011 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #0a0a0a;
             color: #fff;
             overflow: hidden;
             position: relative;
-        }
-        
-        #canvas-container {
-            width: 100vw;
             height: 100vh;
-            position: relative;
+            cursor: crosshair;
         }
-        
-        .title {
-            position: absolute;
-            top: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            text-align: center;
+
+        /* Canvas for animated lines */
+        #canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        /* Animated background gradient */
+        .gradient-bg {
+            position: fixed;
+            width: 200%;
+            height: 200%;
+            top: -50%;
+            left: -50%;
+            background: radial-gradient(circle at center, 
+                rgba(255, 105, 180, 0.1) 0%, 
+                rgba(138, 43, 226, 0.05) 25%, 
+                rgba(0, 0, 0, 0) 50%);
+            animation: rotateGradient 30s linear infinite;
+            z-index: 0;
+        }
+
+        @keyframes rotateGradient {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Main content container */
+        .container {
+            position: relative;
             z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            padding: 20px;
             pointer-events: none;
         }
-        
-        .title h1 {
-            font-size: 2.5em;
-            font-weight: 300;
-            letter-spacing: 0.1em;
-            text-shadow: 0 0 20px rgba(255, 105, 180, 0.8);
-            margin-bottom: 10px;
-            background: linear-gradient(45deg, #ff69b4, #ff1493, #ff69b4);
+
+        /* Logo/Title styling */
+        .logo {
+            font-size: clamp(2.5rem, 8vw, 5rem);
+            font-weight: 200;
+            letter-spacing: 0.05em;
+            text-align: center;
+            margin-bottom: 20px;
+            position: relative;
+            pointer-events: auto;
+        }
+
+        .logo .forever {
+            color: rgba(255, 255, 255, 0.9);
+            text-shadow: 0 0 30px rgba(255, 255, 255, 0.5);
+        }
+
+        .logo .link {
+            background: linear-gradient(135deg, #ff69b4, #8a2be2, #ff69b4);
+            background-size: 200% 200%;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
+            animation: gradientShift 3s ease infinite;
         }
-        
-        .title p {
-            font-size: 1.2em;
-            color: rgba(255, 182, 193, 0.9);
-            font-style: italic;
-        }
-        
-        .equations {
-            position: absolute;
-            bottom: 30px;
-            left: 30px;
-            background: rgba(0, 0, 0, 0.5);
-            padding: 20px;
-            border-radius: 10px;
-            border: 1px solid rgba(255, 105, 180, 0.3);
-            backdrop-filter: blur(10px);
-            z-index: 10;
-            font-family: 'Courier New', monospace;
-            font-size: 0.9em;
-            color: rgba(255, 182, 193, 0.9);
-            max-width: 400px;
-        }
-        
-        .equations h3 {
-            margin-bottom: 10px;
+
+        .logo .love {
             color: #ff69b4;
+            text-shadow: 0 0 40px rgba(255, 105, 180, 0.8),
+                         0 0 80px rgba(255, 105, 180, 0.4);
+            animation: pulse 2s ease-in-out infinite;
         }
-        
 
-        
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.8; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.05); }
+        }
+
+        /* Subtitle */
+        .subtitle {
+            font-size: clamp(1rem, 3vw, 1.5rem);
+            font-weight: 300;
+            color: rgba(255, 255, 255, 0.6);
+            text-align: center;
+            margin-bottom: 40px;
+            letter-spacing: 0.1em;
+            pointer-events: auto;
+        }
+
+        /* Interactive nodes */
+        .node {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.6);
+            z-index: 5;
+            transition: all 0.3s ease;
+            pointer-events: auto;
+        }
+
+        .node:hover {
+            width: 16px;
+            height: 16px;
+            background: #ff69b4;
+            box-shadow: 0 0 40px rgba(255, 105, 180, 0.8);
+        }
+
+        /* Connection lines */
+        .connection-line {
+            position: absolute;
+            height: 1px;
+            background: linear-gradient(90deg, 
+                transparent, 
+                rgba(255, 105, 180, 0.8), 
+                transparent);
+            transform-origin: left center;
+            animation: flowLine 3s linear infinite;
+            z-index: 4;
+        }
+
+        @keyframes flowLine {
+            0% { opacity: 0; }
+            50% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        /* Floating particles */
+        .particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 3;
+        }
+
+        /* Footer info */
+        .info {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.4);
+            z-index: 10;
+            pointer-events: auto;
+        }
+
+        .info a {
+            color: #ff69b4;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .info a:hover {
+            color: #fff;
+            text-shadow: 0 0 10px rgba(255, 105, 180, 0.8);
+        }
+
+        /* Mobile responsiveness */
         @media (max-width: 768px) {
-            .title h1 {
-                font-size: 1.8em;
+            .logo {
+                font-size: clamp(2rem, 10vw, 3.5rem);
             }
-            .equations {
-                bottom: 10px;
-                left: 10px;
-                padding: 15px;
-                font-size: 0.8em;
+            
+            .subtitle {
+                font-size: clamp(0.9rem, 4vw, 1.2rem);
             }
-
         }
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" id="MathJax-script" async></script>
 </head>
 <body>
-    <div id="canvas-container"></div>
+    <div class="gradient-bg"></div>
+    <canvas id="canvas"></canvas>
     
-    <div class="title">
-        <h1>Math.ForeverLink.Love</h1>
-        <p>当数学遇见爱情，方程式绘出心的形状</p>
+    <div class="container">
+        <h1 class="logo">
+            <span class="forever">forever</span><span class="link">link</span><span class="love">.love</span>
+        </h1>
+        <p class="subtitle">连接永恒 · 链接真爱</p>
     </div>
     
-    <div class="equations">
-        <h3>爱的参数方程：</h3>
-        <div>
-            \[\begin{aligned}
-            x &= \sin u\,\bigl(15\sin v - 4\sin 3v\bigr) \\
-            y &= 8\cos u \\
-            z &= \sin u\,\bigl(15\cos v - 5\cos 2v - 2\cos 3v - \cos v\bigr)
-            \end{aligned}\]
-        </div>
+    <div class="info">
+        <p>Move your cursor to create connections</p>
     </div>
-    
 
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <script>
-        let scene, camera, renderer, controls;
-        let pointCloud, solidMesh;
-        let isPointCloud = true;
-        let time = 0;
-        let viewTime = 0;
-        let orbitAngle = 0;
-        const orbitRadius = 40;
-        const orbitHeight = 8;
+        // Canvas setup
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
         
-        function init() {
-            // 创建场景
-            scene = new THREE.Scene();
-            scene.fog = new THREE.Fog(0x1a0033, 10, 100);
-            
-            // 创建相机
-            camera = new THREE.PerspectiveCamera(
-                75,
-                window.innerWidth / window.innerHeight,
-                0.1,
-                1000
-            );
-            camera.position.set(0, 8, 40);
-            
-            // 创建渲染器
-            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(window.devicePixelRatio);
-            renderer.shadowMap.enabled = true;
-            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-            document.getElementById('canvas-container').appendChild(renderer.domElement);
-            
-            // 添加控制器
-            controls = new THREE.OrbitControls(camera, renderer.domElement);
-            controls.enableDamping = true;
-            controls.dampingFactor = 0.05;
-            controls.autoRotate = false;
-            controls.autoRotateSpeed = 0.5;
-            
-            // 添加光源
-            const ambientLight = new THREE.AmbientLight(0xff69b4, 0.3);
-            scene.add(ambientLight);
-            
-            const directionalLight1 = new THREE.DirectionalLight(0xff1493, 0.8);
-            directionalLight1.position.set(10, 20, 10);
-            directionalLight1.castShadow = true;
-            scene.add(directionalLight1);
-            
-            const directionalLight2 = new THREE.DirectionalLight(0xff69b4, 0.5);
-            directionalLight2.position.set(-10, 10, -10);
-            scene.add(directionalLight2);
-            
-            const pointLight = new THREE.PointLight(0xffffff, 0.5);
-            pointLight.position.set(0, 0, 0);
-            scene.add(pointLight);
-            
-            // 创建心形
-            createHeart();
-            
-            // 简化背景：移除粒子系统
-            
-            // 窗口大小调整
-            window.addEventListener('resize', onWindowResize);
+        // Set canvas size
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
         }
-        
-        function createHeart() {
-            const points = [];
-            const colors = [];
-            const uSegments = 80;
-            const vSegments = 80;
-            
-            // 生成点
-            for (let i = 0; i <= uSegments; i++) {
-                for (let j = 0; j <= vSegments; j++) {
-                    const u = (i / uSegments) * Math.PI * 2;
-                    const v = (j / vSegments) * Math.PI * 2;
-                    
-                    const x = Math.sin(u) * (15 * Math.sin(v) - 4 * Math.sin(3 * v));
-                    const y = 8 * Math.cos(u);
-                    const z = Math.sin(u) * (15 * Math.cos(v) - 5 * Math.cos(2 * v) - 2 * Math.cos(3 * v) - Math.cos(v));
-                    
-                    points.push(new THREE.Vector3(x, y, z));
-                    
-                    // 根据位置设置颜色
-                    const colorIntensity = (Math.sin(u) + 1) / 2;
-                    const r = 1;
-                    const g = 0.2 + colorIntensity * 0.3;
-                    const b = 0.5 + colorIntensity * 0.3;
-                    colors.push(r, g, b);
-                }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        // Particle system
+        class Particle {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.vx = (Math.random() - 0.5) * 2;
+                this.vy = (Math.random() - 0.5) * 2;
+                this.radius = Math.random() * 2 + 1;
+                this.life = 1;
+                this.decay = Math.random() * 0.01 + 0.005;
             }
-            
-            // 创建点云
-            const pointGeometry = new THREE.BufferGeometry().setFromPoints(points);
-            pointGeometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
-            
-            const pointMaterial = new THREE.PointsMaterial({
-                size: 0.3,
-                vertexColors: true,
-                transparent: true,
-                opacity: 0.8,
-                blending: THREE.AdditiveBlending
-            });
-            
-            pointCloud = new THREE.Points(pointGeometry, pointMaterial);
-            scene.add(pointCloud);
-            
-            // 创建实体网格
-            const geometry = new THREE.ParametricGeometry((u, v, target) => {
-                u *= Math.PI * 2;
-                v *= Math.PI * 2;
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.life -= this.decay;
                 
-                const x = Math.sin(u) * (15 * Math.sin(v) - 4 * Math.sin(3 * v));
-                const y = 8 * Math.cos(u);
-                const z = Math.sin(u) * (15 * Math.cos(v) - 5 * Math.cos(2 * v) - 2 * Math.cos(3 * v) - Math.cos(v));
+                // Bounce off edges
+                if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+                if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.life;
+                ctx.fillStyle = '#fff';
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        // Node system for connections
+        class Node {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.vx = (Math.random() - 0.5) * 0.5;
+                this.vy = (Math.random() - 0.5) * 0.5;
+                this.radius = 3;
+                this.connections = [];
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
                 
-                target.set(x, y, z);
-            }, uSegments, vSegments);
-            
-            // 计算顶点颜色
-            const meshColors = [];
-            const positionAttribute = geometry.attributes.position;
-            for (let i = 0; i < positionAttribute.count; i++) {
-                const y = positionAttribute.getY(i);
-                const colorIntensity = (y + 8) / 16;
-                meshColors.push(1, 0.2 + colorIntensity * 0.3, 0.5 + colorIntensity * 0.3);
+                // Soft bounce
+                if (this.x < 50 || this.x > canvas.width - 50) this.vx *= -0.9;
+                if (this.y < 50 || this.y > canvas.height - 50) this.vy *= -0.9;
+                
+                // Add some randomness
+                this.vx += (Math.random() - 0.5) * 0.1;
+                this.vy += (Math.random() - 0.5) * 0.1;
+                
+                // Limit speed
+                this.vx *= 0.99;
+                this.vy *= 0.99;
             }
-            geometry.setAttribute('color', new THREE.Float32BufferAttribute(meshColors, 3));
-            
-            const material = new THREE.MeshPhongMaterial({
-                vertexColors: true,
-                side: THREE.DoubleSide,
-                shininess: 100,
-                specular: 0xff69b4,
-                emissive: 0x330011,
-                emissiveIntensity: 0.2
-            });
-            
-            solidMesh = new THREE.Mesh(geometry, material);
-            solidMesh.castShadow = true;
-            solidMesh.receiveShadow = true;
-            solidMesh.visible = false;
-            scene.add(solidMesh);
-        }
-        
-        // 简化背景：无粒子函数
-        
-        function updateViewAndCamera() {
-            viewTime += 0.01;
-            
-            // 每5秒切换一次视图模式（点云/实体）
-            if (viewTime % 10 < 5) {
-                if (!isPointCloud) {
-                    isPointCloud = true;
-                    pointCloud.visible = true;
-                    solidMesh.visible = false;
-                }
-            } else {
-                if (isPointCloud) {
-                    isPointCloud = false;
-                    pointCloud.visible = false;
-                    solidMesh.visible = true;
+
+            draw() {
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Glow effect
+                ctx.shadowBlur = 20;
+                ctx.shadowColor = 'rgba(255, 105, 180, 0.5)';
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            }
+
+            connectTo(node) {
+                const dx = node.x - this.x;
+                const dy = node.y - this.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < 200) {
+                    const opacity = 1 - distance / 200;
+                    ctx.strokeStyle = `rgba(255, 105, 180, ${opacity * 0.3})`;
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(this.x, this.y);
+                    ctx.lineTo(node.x, node.y);
+                    ctx.stroke();
                 }
             }
-            
-            // 相机自动绕心形平滑旋转，保持心形可视
-            orbitAngle += 0.003;
-            const x = Math.sin(orbitAngle) * orbitRadius;
-            const z = Math.cos(orbitAngle) * orbitRadius;
-            const y = orbitHeight;
-            camera.position.set(x, y, z);
-            camera.lookAt(0, 0, 0);
         }
-        
+
+        // Animation variables
+        const particles = [];
+        const nodes = [];
+        const maxParticles = 100;
+        const nodeCount = 15;
+        let mouseX = canvas.width / 2;
+        let mouseY = canvas.height / 2;
+        let frame = 0;
+
+        // Initialize nodes
+        for (let i = 0; i < nodeCount; i++) {
+            nodes.push(new Node(
+                Math.random() * canvas.width,
+                Math.random() * canvas.height
+            ));
+        }
+
+        // Mouse tracking
+        canvas.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+            
+            // Create particles on mouse move
+            if (particles.length < maxParticles) {
+                particles.push(new Particle(mouseX, mouseY));
+            }
+        });
+
+        // Touch support
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            mouseX = touch.clientX;
+            mouseY = touch.clientY;
+            
+            if (particles.length < maxParticles) {
+                particles.push(new Particle(mouseX, mouseY));
+            }
+        });
+
+        // Create connection to mouse
+        function connectToMouse(node) {
+            const dx = mouseX - node.x;
+            const dy = mouseY - node.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            if (distance < 150) {
+                const opacity = 1 - distance / 150;
+                ctx.strokeStyle = `rgba(138, 43, 226, ${opacity * 0.5})`;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(node.x, node.y);
+                ctx.lineTo(mouseX, mouseY);
+                ctx.stroke();
+                
+                // Attract node slightly to mouse
+                node.vx += dx * 0.0001;
+                node.vy += dy * 0.0001;
+            }
+        }
+
+        // Animation loop
         function animate() {
-            requestAnimationFrame(animate);
+            // Clear canvas
+            ctx.fillStyle = 'rgba(10, 10, 10, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
             
-            time += 0.01;
-            
-            // 更新视图和相机
-            updateViewAndCamera();
-            
-            // 更新控制器
-            controls.update();
-            
-            // 心跳动画
-            const scale = 1 + Math.sin(time * 2) * 0.02;
-            if (pointCloud) pointCloud.scale.set(scale, scale, scale);
-            if (solidMesh) solidMesh.scale.set(scale, scale, scale);
-            
-            // 点云动画
-            if (pointCloud && pointCloud.visible) {
-                pointCloud.material.size = 0.3 + Math.sin(time * 3) * 0.1;
+            // Update and draw particles
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const particle = particles[i];
+                particle.update();
+                particle.draw();
+                
+                if (particle.life <= 0) {
+                    particles.splice(i, 1);
+                }
             }
             
-            renderer.render(scene, camera);
+            // Update and draw nodes
+            nodes.forEach((node, i) => {
+                node.update();
+                
+                // Connect to nearby nodes
+                for (let j = i + 1; j < nodes.length; j++) {
+                    node.connectTo(nodes[j]);
+                }
+                
+                // Connect to mouse
+                connectToMouse(node);
+                
+                node.draw();
+            });
+            
+            // Draw flowing lines
+            frame++;
+            const time = frame * 0.01;
+            
+            ctx.strokeStyle = 'rgba(255, 105, 180, 0.1)';
+            ctx.lineWidth = 1;
+            for (let i = 0; i < 5; i++) {
+                ctx.beginPath();
+                const startX = canvas.width * (i / 5);
+                const startY = canvas.height / 2 + Math.sin(time + i) * 100;
+                ctx.moveTo(startX, startY);
+                
+                for (let x = startX; x < canvas.width; x += 10) {
+                    const y = startY + Math.sin((x / 100) + time + i) * 50;
+                    ctx.lineTo(x, y);
+                }
+                ctx.stroke();
+            }
+            
+            requestAnimationFrame(animate);
         }
-        
-        function onWindowResize() {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        }
-        
-        // 初始化
-        init();
+
+        // Start animation
         animate();
+
+        // Add interactive elements
+        document.addEventListener('click', (e) => {
+            // Create a burst of particles at click location
+            for (let i = 0; i < 10; i++) {
+                if (particles.length < maxParticles) {
+                    const particle = new Particle(e.clientX, e.clientY);
+                    particle.vx = (Math.random() - 0.5) * 8;
+                    particle.vy = (Math.random() - 0.5) * 8;
+                    particles.push(particle);
+                }
+            }
+            
+            // Add a new node at click location
+            if (nodes.length < 30) {
+                nodes.push(new Node(e.clientX, e.clientY));
+            }
+        });
     </script>
 </body>
 </html>
